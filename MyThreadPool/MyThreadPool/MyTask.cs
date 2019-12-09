@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace MyThreadPool
 {
-    public class MyTask<TResult> : IMyTask<TResult>
+    public class MyTask<TResult> : IMyTask<TResult>, IDisposable
     {
         public bool IsCompleted { get; private set; }
         public bool IsFailed { get; private set; }
@@ -109,6 +109,11 @@ namespace MyThreadPool
                     _manualResetEvent.Set();
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            _manualResetEvent?.Dispose();
         }
     }
 }

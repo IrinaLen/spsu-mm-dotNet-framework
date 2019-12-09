@@ -60,7 +60,10 @@ namespace MyThreadPool
                         lock (_disposeLock)
                         {
                             if (_isDisposedInsideWorker) return;
+                            _jobQueue.Dispose();
+                            _readerWriterLock.Dispose();
                             _isDisposedInsideWorker = true;
+                            GC.SuppressFinalize(this);  
                         }
 
                         return;
