@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using ThreadPool.Exceptions;
 using ThreadPool.MyTask;
 
 namespace ThreadPool
@@ -11,163 +9,74 @@ namespace ThreadPool
   public sealed class MyThreadPool : IDisposable
   {
     private const int DefaultPoolSize = 4;
-    private readonly EmptyPoolPolitics _emptyPoolPolitics;
-    private readonly ConcurrentDictionary<int, Worker> _allWorkers = new ConcurrentDictionary<int, Worker>();
-    private readonly ConcurrentQueue<Worker> _waitingWorkers = new ConcurrentQueue<Worker>();
-    private readonly ConcurrentQueue<Action> _waitingTasks = new ConcurrentQueue<Action>();
-    private volatile int _isDisposed = 0;
-    private volatile int _size = 0;
-    
-    public int Size => _size;
+    private readonly BlockingCollection<Action> _waitingTasks = new BlockingCollection<Action>();
+    private readonly Thread[] _threads;
+    private bool _isDisposed = false;
+    private readonly object _disposeLockObj = new object();
 
-    public int AliveCount => _allWorkers.Count(pair => pair.Value.Thread.IsAlive);
-    
-    public MyThreadPool(int poolSize, EmptyPoolPolitics emptyPoolPolitics = EmptyPoolPolitics.Wait)
+    public int Size => _threads.Count(thread => thread.IsAlive);
+
+    public MyThreadPool(int poolSize)
     {
-      _emptyPoolPolitics = emptyPoolPolitics;
-      for (int i = 0; i < poolSize; i++)
+      _threads = new Thread[poolSize];
+      for (var i = 0; i < poolSize; ++i)
       {
-        AddWorker(null);
+        _threads[i] = new Thread(ThreadWork);
+        _threads[i].Start();
       }
     }
 
-    public MyThreadPool(EmptyPoolPolitics emptyPoolPolitics = EmptyPoolPolitics.Wait) : this(DefaultPoolSize,
-      emptyPoolPolitics)
+    public MyThreadPool() : this(DefaultPoolSize)
     {
     }
 
     public void Enqueue<TResult>(IMyTask<TResult> task)
     {
-      if (_isDisposed > 0)
+      if (task == null)
       {
-        throw new ThreadPoolDisposedException();
+        throw new ArgumentNullException(nameof(task), "Cannot run null in ThreadPool");
       }
-      _waitingTasks.Enqueue(task.Run);
-      if (_waitingWorkers.TryDequeue(out var worker))
+      lock (_disposeLockObj)
       {
-        TrySetNextTask(worker);
-      }
-      else
-      {
-        switch (_emptyPoolPolitics)
+        if (_isDisposed)
         {
-          case EmptyPoolPolitics.Wait:
-            break;
-          case EmptyPoolPolitics.Error:
-            throw new ThreadPoolIsFullException();
-          case EmptyPoolPolitics.Extend:
-            if (_waitingTasks.TryDequeue(out var waitingTask))
-            {
-              AddWorker(waitingTask);
-            }
-
-            break;
+          throw new ObjectDisposedException("Cannot add task into ThreadPool because it's disposed");
         }
+        _waitingTasks.Add(task.Run);
       }
     }
 
     public void Dispose()
     {
-      Interlocked.CompareExchange(ref _isDisposed, 1, 0);
-      while (!_waitingWorkers.IsEmpty)
+      lock (_disposeLockObj)
       {
-        if (_waitingWorkers.TryDequeue(out var worker))
+        if (_isDisposed)
         {
-          worker.Stop();
+          throw new ObjectDisposedException("Cannot dispose ThreadPool because it's already disposed");
         }
+        _isDisposed = true;
+        _waitingTasks.CompleteAdding();
+        foreach (var thread in _threads)
+        {
+          thread.Join();
+        }
+        _waitingTasks.Dispose();
       }
     }
 
-    private void AddWorker(Action task)
+    private void ThreadWork()
     {
-      Interlocked.Increment(ref _size);
-      var worker = new Worker(task, this);
-      var workerThread = worker.Thread;
-      workerThread.Start();
-      if (task == null)
+      while (true)
       {
-        _waitingWorkers.Enqueue(worker);
-      }
-
-      if (!_allWorkers.TryAdd(worker.Thread.ManagedThreadId, worker))
-      {
-        throw new ThreadPoolCannotAddThread();
-      }
-    }
-
-    private void TrySetNextTask(Worker worker)
-    {
-      if (_waitingTasks.TryDequeue(out var task))
-      {
-        if (_isDisposed == 0)
+        try
         {
-          worker.Task = task;
+          var task = _waitingTasks.Take();
+          task.Invoke();
         }
-        else
+        catch (InvalidOperationException e)
         {
-          worker.Stop();
+          return;
         }
-      }
-      else
-      {
-        _waitingWorkers.Enqueue(worker);
-      }
-    }
-
-    private class Worker
-    {
-      internal readonly Thread Thread;
-      
-      private MyThreadPool _context;
-      private readonly EventWaitHandle _hasTask;
-
-      internal Action Task
-      {
-        set
-        {
-          _task = value;
-          _hasTask.Set();
-        }
-      }
-
-      private volatile int _isStopped = 0;
-      private Action _task;
-
-      public Worker(Action firstTask, MyThreadPool context)
-      {
-        _context = context;
-        _task = firstTask;
-        Thread = new Thread(Run);
-        _hasTask = new AutoResetEvent(firstTask != null);
-      }
-
-      private void Run()
-      {
-        while (true)
-        {
-          _hasTask.WaitOne();
-          if (_isStopped > 0)
-          {
-            ClearResources();
-            break;
-          }
-
-          _task.Invoke();
-          _context.TrySetNextTask(this);
-        }
-      }
-
-      internal void Stop()
-      {
-        Interlocked.Increment(ref _isStopped);
-        _hasTask.Set();
-      }
-
-      private void ClearResources()
-      {
-        _hasTask.Dispose();
-        _context = null;
-        Task = null;
       }
     }
   }

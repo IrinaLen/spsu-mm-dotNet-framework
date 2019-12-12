@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using NUnit.Framework;
 using ThreadPool;
@@ -9,26 +10,46 @@ namespace ThreadPoolTest
   [TestFixture]
   public class ThreadPoolTests
   {
+    private const int ThreadPoolSize = 4;
+
     [Test]
     public void AddOneTaskTest()
     {
-      var threadPoolSize = 4;
-      using (var tp = new MyThreadPool(threadPoolSize))
+      using (var tp = new MyThreadPool(ThreadPoolSize))
       {
-        IMyTask<int> task = new MyTask<int>(() => 2 + 2);
-        tp.Enqueue(task);
-        Assert.AreEqual(4, task.Result);
+        using (var task = new MyTask<int>(() => 2 + 2))
+        {
+          tp.Enqueue(task);
+          Assert.AreEqual(4, task.Result);
+        }
       }
     }
-    
+
+    [Test]
+    public void DisposeThreadPoolTwiceTest()
+    {
+      var tp = new MyThreadPool(ThreadPoolSize);
+      tp.Dispose();
+      Assert.Throws<ObjectDisposedException>(() => tp.Dispose());
+    }
+
+    [Test]
+    public void AddNullTaskTest()
+    {
+      using (var tp = new MyThreadPool(ThreadPoolSize))
+      {
+        Assert.Throws<ArgumentNullException>(() => tp.Enqueue((IMyTask<int>)null));
+      }
+    }
+
+
     [Test]
     public void AddMoreTasksThanThreadPoolSize()
     {
-      var threadPoolSize = 4;
-      var tasksCount = 8;
-      using (var tp = new MyThreadPool(threadPoolSize))
+      const int tasksCount = 8;
+      using (var tp = new MyThreadPool(ThreadPoolSize))
       {
-        var tasks = new List<IMyTask<int>>();
+        var tasks = new List<MyTask<int>>();
         for (var i = 0; i < tasksCount; ++i)
         {
           var task = new MyTask<int>(() =>
@@ -39,16 +60,20 @@ namespace ThreadPoolTest
           tp.Enqueue(task);
           tasks.Add(task);
         }
-        tasks.ForEach(task => Assert.AreEqual(4, task.Result));
+
+        tasks.ForEach(task =>
+        {
+          Assert.AreEqual(4, task.Result);
+          task.Dispose();
+        });
       }
     }
 
     [Test]
-    public void AddSeveralTaskInParallelTest()
+    public void AddTasksInParallelTest()
     {
-      var threadPoolSize = 4;
-      var parallelThreadsCount = 40;
-      using (var tp = new MyThreadPool(threadPoolSize))
+      const int parallelThreadsCount = 40;
+      using (var tp = new MyThreadPool(ThreadPoolSize))
       {
         var threads = new List<Thread>();
         for (var i = 0; i < parallelThreadsCount; i++)
@@ -56,77 +81,74 @@ namespace ThreadPoolTest
           var thread = new Thread(() =>
           {
             var j = i;
-            var task1 = new MyTask<int>(() => j);
-            tp.Enqueue(task1);
-            Assert.AreEqual(j, task1.Result);
-          });
-          threads.Add(thread);
-          thread.Start();
-        }
-
-        threads.ForEach(thread => thread.Join());
-      }
-    }
-
-    [Test]
-    public void AddSeveralTaskCheckThreadsCount()
-    {
-      var threadPoolSize = 4;
-      var parallelThreadsCount = 40;
-      using (var tp = new MyThreadPool(threadPoolSize))
-      {
-        var threads = new List<Thread>();
-        for (var i = 0; i < parallelThreadsCount; i++)
-        {
-          var thread = new Thread(() =>
-          {
-            var j = i;
-            var task1 = new MyTask<int>(() =>
+            using (var task = new MyTask<int>(() => j))
             {
-              Thread.Sleep(100);
-              return j;
-            });
-            tp.Enqueue(task1);
-            Assert.AreEqual(j, task1.Result);
-            Assert.AreEqual(threadPoolSize, tp.Size);
-            Assert.AreEqual(threadPoolSize, tp.AliveCount);
+              tp.Enqueue(task);
+              Assert.AreEqual(j, task.Result);
+            }
           });
           threads.Add(thread);
           thread.Start();
         }
 
         threads.ForEach(thread => thread.Join());
+      }
+    }
+
+    [Test]
+    public void AddTasksAndCheckThreadsCount()
+    {
+      using (var tp = new MyThreadPool(ThreadPoolSize))
+      {
+        using (var task1 = new MyTask<int>(() =>
+        {
+          Thread.Sleep(500);
+          return 2 + 2;
+        }))
+        using (var task2 = new MyTask<int>(() =>
+        {
+          Thread.Sleep(500);
+          return 2 + 2;
+        }))
+        {
+          tp.Enqueue(task1);
+          tp.Enqueue(task2);
+          Assert.AreEqual(ThreadPoolSize, tp.Size);
+          Assert.AreEqual(4, task1.Result);
+          Assert.AreEqual(4, task2.Result);
+        }
       }
     }
 
     [Test]
     public void ContinueWithTest()
     {
-      var threadPoolSize = 4;
-      using (var tp = new MyThreadPool(threadPoolSize))
+      using (var tp = new MyThreadPool(ThreadPoolSize))
       {
-        var questionTask = new MyTask<string>(() => "Kotlin is Awesome! What do you think?");
-        var answerTask = questionTask.ContinueWith(question =>
+        using (var taskA = new MyTask<string>(() => "A"))
+        using (var taskB = taskA.ContinueWith(a =>
         {
           Thread.Sleep(2000);
-          return $"{question} - Yeap, better then Java at least";
-        });
-        var resultTask1 = answerTask.ContinueWith(answer =>
+          return $"{a}B";
+        }))
+        using (var taskC = taskB.ContinueWith(ab =>
         {
           Thread.Sleep(1000);
-          return $"{answer} - Good!";
-        });
-        var resultTask2 = answerTask.ContinueWith(answer =>
+          return $"{ab}C";
+        }))
+        using (var taskD = taskB.ContinueWith(ab =>
         {
           Thread.Sleep(1000);
-          return $"{answer} - That a lie!!!";
-        });
-        tp.Enqueue(resultTask2);
-        tp.Enqueue(resultTask1);
-        tp.Enqueue(answerTask);
-        tp.Enqueue(questionTask);
-        Assert.AreEqual("Kotlin is Awesome! What do you think? - Yeap, better then Java at least - Good!", resultTask1.Result);
-        Assert.AreEqual("Kotlin is Awesome! What do you think? - Yeap, better then Java at least - That a lie!!!", resultTask2.Result);
+          return $"{ab}D";
+        }))
+        {
+          tp.Enqueue(taskD);
+          tp.Enqueue(taskC);
+          tp.Enqueue(taskB);
+          tp.Enqueue(taskA);
+          Assert.AreEqual("ABC", taskC.Result);
+          Assert.AreEqual("ABD", taskD.Result);
+        }
       }
     }
   }

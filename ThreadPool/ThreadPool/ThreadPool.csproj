@@ -38,10 +38,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EmptyPoolPolitics.cs" />
-    <Compile Include="Exceptions\ThreadPoolCannotAddThread.cs" />
-    <Compile Include="Exceptions\ThreadPoolDisposedException.cs" />
-    <Compile Include="Exceptions\ThreadPoolIsFullException.cs" />
     <Compile Include="MyTask\IMyTask.cs" />
     <Compile Include="MyTask\MyTask.cs" />
     <Compile Include="MyThreadPool.cs" />

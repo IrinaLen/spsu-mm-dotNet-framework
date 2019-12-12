@@ -2,7 +2,7 @@
 
 namespace ThreadPool.MyTask
 {
-  public interface IMyTask<out TResult>
+  public interface IMyTask<out TResult> : IDisposable
   {
     TResult Result { get; }
     void Run();

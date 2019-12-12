@@ -23,12 +23,11 @@ namespace ThreadPool.MyTask
 
         return _result;
       }
-      internal set => _result = value;
     }
 
     public MyTask(Func<TResult> func)
     {
-      _func = func;
+      _func = func ?? throw new ArgumentNullException(nameof(func), "Task cannot execute null");
     }
 
     public void Run()
@@ -50,6 +49,7 @@ namespace ThreadPool.MyTask
       }
       finally
       {
+        Monitor.
         _ready.Set();
       }
     }
@@ -58,9 +58,14 @@ namespace ThreadPool.MyTask
     {
       return new MyTask<TNewResult>(() =>
       {
-        var oldResult = this.Result;
+        var oldResult = Result;
         return continuation.Invoke(oldResult);
       });
+    }
+
+    public void Dispose()
+    {
+      _ready?.Dispose();
     }
   }
 }
