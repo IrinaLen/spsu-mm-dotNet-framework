@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using System.Security;
 using NUnit.Framework;
 
 namespace TestAppDomains
@@ -24,10 +25,17 @@ namespace TestAppDomains
         public void TestAppDomainUnsafeReadFilePrevent()
         {
             var appDomainUnsafeCalculator = Program.CreateAppDomain(_calculatorLibraryPath, "UnsafeCalculator");
-            //try
-            var ex = Program.SumInAppDomain(appDomainUnsafeCalculator, _assemblyLibraryName, typeNameUnsafeCalculator,
-                5, 6);
-            //catch
+            try
+            {
+                var ex = Program.SumInAppDomain(appDomainUnsafeCalculator, _assemblyLibraryName,
+                    typeNameUnsafeCalculator,
+                    5, 6);
+            }
+            catch (SecurityException e)
+            {
+                Assert.Pass();
+            }
+
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 Assert.AreEqual(true, assembly.GetName().Name != _assemblyLibraryName);

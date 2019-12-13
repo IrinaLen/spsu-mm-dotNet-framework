@@ -1,7 +1,10 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Security;
 using System.Security.Permissions;
+using ICalculatorLibrary;
 
 
 public class Program
@@ -13,10 +16,8 @@ public class Program
     {
         var a = 4;
         var b = 3;
-        var goodCalculatorType = "CalculatorLibrary.CorrectCalculator";
         var newDomain = CreateAppDomain(_libraryPath, "Calc");
-        var res = SumInAppDomain(newDomain, _libraryName, goodCalculatorType, a, b);
-        Console.WriteLine($"Result is {res}");
+        GetProxyCalculator(newDomain).SumAll(typeof(ICalculator), _libraryName, a, b);
     }
 
     public static AppDomain CreateAppDomain(string path, string newDomainName)
@@ -41,12 +42,43 @@ public class Program
         return proxyCalculator.Sum(assemblyName, typeName, a, b);
     }
 
-    class ProxyObjectCalculator : MarshalByRefObject
+    public static ProxyObjectCalculator GetProxyCalculator(AppDomain appDomain)
+    {
+        ProxyObjectCalculator proxyCalculator = (ProxyObjectCalculator) Activator.CreateInstanceFrom(
+            appDomain, typeof(ProxyObjectCalculator).Assembly.ManifestModule.FullyQualifiedName,
+            typeof(ProxyObjectCalculator).FullName).Unwrap();
+
+        return proxyCalculator;
+    }
+
+    public class ProxyObjectCalculator : MarshalByRefObject
     {
         public int Sum(string assemblyName, string typeName, int a, int b)
         {
-            var calculator = (ICalculatorLibrary.ICalculator) Activator.CreateInstance(assemblyName, typeName).Unwrap();
+            var calculator = (ICalculator) Activator.CreateInstance(assemblyName, typeName).Unwrap();
             return calculator.sum(a, b);
+        }
+
+        public void SumAll(Type iType, string assemblyName, int a, int b)
+        {
+            Assembly.Load(assemblyName);
+            var types = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(s => s.GetTypes())
+                .Where(p => iType.IsAssignableFrom(p) && p.IsClass);
+            foreach (var type in types)
+            {
+                Console.WriteLine($"Calculator {type}:");
+
+                var calc = (ICalculator) Activator.CreateInstance(type);
+                try
+                {
+                    Console.WriteLine($"Result is {calc.sum(a, b)}");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Result is{e.Message}");
+                }
+            }
         }
     }
 }
