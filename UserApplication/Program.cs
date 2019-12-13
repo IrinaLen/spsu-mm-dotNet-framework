@@ -1,19 +1,21 @@
 ﻿using System;
+using System.IO;
 using System.Security;
 using System.Security.Permissions;
 
 
 public class Program
 {
+    private static string _libraryPath = Path.Combine("..", "..", "..", "CalculatorLibrary", "bin", "Release");
+    private static string _libraryName = "CalculatorLibrary";
+
     public static void Main(string[] args)
     {
-        var directoryWithImplementationAssembly = args[0];
-        var assemblyCalculatorName = args[1];
-        var a = int.Parse(args[2]);
-        var b = int.Parse(args[3]);
+        var a = 4;
+        var b = 3;
         var goodCalculatorType = "CalculatorLibrary.CorrectCalculator";
-        var newDomain = CreateAppDomain(directoryWithImplementationAssembly, "Calc");
-        var res = SumInAppDomain(newDomain, assemblyCalculatorName, goodCalculatorType, a, b);
+        var newDomain = CreateAppDomain(_libraryPath, "Calc");
+        var res = SumInAppDomain(newDomain, _libraryName, goodCalculatorType, a, b);
         Console.WriteLine($"Result is {res}");
     }
 
