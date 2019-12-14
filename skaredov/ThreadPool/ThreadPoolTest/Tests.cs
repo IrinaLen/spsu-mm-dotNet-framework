@@ -10,8 +10,8 @@ namespace ThreadPoolTest
 {
     public class Tests
     {
-        private Stopwatch _sp = new Stopwatch();
-        private Random _rnd = new Random(0);
+        private readonly Stopwatch _sp = new Stopwatch();
+        private readonly Random _rnd = new Random(0);
         private ThreadPool.ThreadPool _pool;
 
         private void Init(int capacity)
@@ -64,7 +64,7 @@ namespace ThreadPoolTest
             Init(capacity);
 
             var tasks = new List<IMyTask<string>>();
-            for (int i = 0; i < capacity << 1; i++)
+            for (var i = 0; i < capacity << 1; i++)
             {
                 tasks.Add(GetTask(i));
                 Debug.WriteLine($"\tenqueue task #{i}");
@@ -73,7 +73,7 @@ namespace ThreadPoolTest
 
             var sp = new Stopwatch();
             sp.Start();
-            for (int i = 0; i < capacity << 1; i++)
+            for (var i = 0; i < capacity << 1; i++)
             {
                 Debug.WriteLine($"\twait for result #{i}");
                 _sp.Restart();
@@ -106,7 +106,7 @@ namespace ThreadPoolTest
             {
                 Debug.WriteLine($"\tresult: {task.Result} in {_sp.ElapsedMilliseconds} ms");
             });
-            
+
             Debug.WriteLine($"\tfailed result: {exception.Message}");
             Assert.NotNull(exception.InnerException);
             Assert.IsInstanceOf(typeof(ArgumentOutOfRangeException), exception.InnerException);
@@ -122,10 +122,10 @@ namespace ThreadPoolTest
             Init(capacity);
 
             var task = GetTask(0);
-            Debug.WriteLine($"\tenqueue task #0");
+            Debug.WriteLine("\tenqueue task #0");
             _pool.Enqueue(task);
             var tasks = new List<IMyTask<string>> {task};
-            for (int i = 1; i < capacity << 1; i++)
+            for (var i = 1; i < capacity << 1; i++)
             {
                 var number = i;
                 task = task.ContinueWith(result =>
@@ -140,7 +140,7 @@ namespace ThreadPoolTest
 
             var sp = new Stopwatch();
             sp.Start();
-            for (int i = 0; i < capacity << 1; i++)
+            for (var i = 0; i < capacity << 1; i++)
             {
                 Debug.WriteLine($"\twait for result #{i}");
                 _sp.Restart();
@@ -150,7 +150,7 @@ namespace ThreadPoolTest
             Debug.WriteLine($"\t total elapsed time: {sp.ElapsedMilliseconds}");
             Debug.WriteLine("=====================");
         }
-        
+
         [TearDown]
         public void Dispose()
         {
