@@ -64,7 +64,7 @@ namespace ThreadPoolTest
     }
 
     [Test]
-    public void AddMoreTasksThanThreadPoolSize()
+    public void AddMoreTasksThanThreadPoolSizeTest()
     {
       const int tasksCount = 8;
       using (var tp = new MyThreadPool(ThreadPoolSize))
@@ -116,7 +116,7 @@ namespace ThreadPoolTest
     }
 
     [Test]
-    public void AddTasksAndCheckThreadsCount()
+    public void AddTasksAndCheckThreadsCountTest()
     {
       using (var tp = new MyThreadPool(ThreadPoolSize))
       {
@@ -134,10 +134,56 @@ namespace ThreadPoolTest
           tp.Enqueue(task1);
           tp.Enqueue(task2);
           Assert.AreEqual(ThreadPoolSize, tp.Size);
-          Assert.AreEqual(4, task1.Result);
-          Assert.AreEqual(4, task2.Result);
         }
       }
+    }
+
+    [Test]
+    public void AddTasksAndDisposeThreadPoolTest()
+    {
+      // IMyTask<int> task1, task2;
+      using (var tp = new MyThreadPool(ThreadPoolSize))
+      {
+        var task1 = new MyTask<int>(() =>
+        {
+          Thread.Sleep(500);
+          return 2 + 2;
+        });
+        var task2 = new MyTask<int>(() =>
+        {
+          Thread.Sleep(500);
+          return 2 + 2;
+        });
+        tp.Enqueue(task1);
+        tp.Enqueue(task2);
+        Assert.AreEqual(4, task1.Result);
+        Assert.AreEqual(4, task2.Result);
+        task1.Dispose();
+        task2.Dispose();
+      }
+    }
+
+    [Test]
+    public void EnqueueIntoDisposedThreadPoolTest()
+    {
+      var tp = new MyThreadPool(ThreadPoolSize);
+      var task1 = new MyTask<int>(() =>
+      {
+        Thread.Sleep(500);
+        return 2 + 2;
+      });
+      tp.Enqueue(task1);
+      tp.Dispose();
+      using (var task2 = new MyTask<int>(() =>
+      {
+        Thread.Sleep(500);
+        return 2 + 2;
+      }))
+      {
+        Assert.Throws<ObjectDisposedException>(() => tp.Enqueue(task2));
+      }
+
+      task1.Dispose();
     }
 
     [Test]

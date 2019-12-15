@@ -77,6 +77,10 @@ namespace ThreadPool
         {
           return;
         }
+        catch (Exception)
+        {
+          // ignored
+        }
       }
     }
   }
