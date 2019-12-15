@@ -2,6 +2,6 @@
 {
     public interface ICalculator
     {
-        int sum(int a, int b);
+        int Sum(int a, int b);
     }
 }

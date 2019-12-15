@@ -56,7 +56,7 @@ public class Program
         public int Sum(string assemblyName, string typeName, int a, int b)
         {
             var calculator = (ICalculator) Activator.CreateInstance(assemblyName, typeName).Unwrap();
-            return calculator.sum(a, b);
+            return calculator.Sum(a, b);
         }
 
         public void SumAll(Type iType, string assemblyName, int a, int b)
@@ -72,7 +72,7 @@ public class Program
                 var calc = (ICalculator) Activator.CreateInstance(type);
                 try
                 {
-                    Console.WriteLine($"Result is {calc.sum(a, b)}");
+                    Console.WriteLine($"Result is {calc.Sum(a, b)}");
                 }
                 catch (Exception e)
                 {
