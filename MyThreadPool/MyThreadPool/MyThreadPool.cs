@@ -10,19 +10,14 @@ namespace MyThreadPool
         public bool IsDisposed { get; private set; }
 
         public int NumThreads { get; }
-        
+
 
         private readonly BlockingCollection<ITask> _jobQueue = new BlockingCollection<ITask>();
 
-        internal List<Thread> _threads = new List<Thread>();
-
-        
-        private readonly ReaderWriterLockSlim _readerWriterLock = new ReaderWriterLockSlim();
+        private List<Thread> _threads = new List<Thread>();
 
         
         private readonly object _disposeLock = new object();
-
-        private volatile bool _isDisposedInsideWorker;
 
         public MyThreadPool(int numThreads = 1)
         {
@@ -45,29 +40,12 @@ namespace MyThreadPool
                     var job = _jobQueue.Take();
                     job.Execute();
                 }
+                catch (InvalidOperationException)
+                {
+                    return;
+                }
                 catch (Exception ex)
                 {
-                    if (ex is ObjectDisposedException)
-                    {
-                        return;
-                    }
-
-                    if (ex is InvalidOperationException)
-                    {
-                        // now queue is empty and complete -> need to clear
-                        //lock and only one object claer
-                        if (_isDisposedInsideWorker) return;
-                        lock (_disposeLock)
-                        {
-                            if (_isDisposedInsideWorker) return;
-                            _jobQueue.Dispose();
-                            _readerWriterLock.Dispose();
-                            _isDisposedInsideWorker = true;
-                            GC.SuppressFinalize(this);  
-                        }
-
-                        return;
-                    }
                 }
             }
         }
@@ -79,53 +57,54 @@ namespace MyThreadPool
 
         public void Enqueue<TResult>(IMyTask<TResult> a)
         {
-            _readerWriterLock.EnterReadLock();
-
-            if (IsDisposed)
+            lock (_disposeLock)
             {
-                _readerWriterLock.ExitReadLock();
-                throw new AggregateException("Disposed already");
+                if (IsDisposed)
+                {
+                    throw new AggregateException("Disposed already");
+                }
+
+                // enqueue all tasks that not enqueued 
+                if (a.IsInThreadPool) return;
+                //inc c add.Reset()
+                var list = new LinkedList<ITask>();
+                list.AddFirst(a);
+                var tmp = list.First.Value.PreviousTask;
+                while (tmp != null && !tmp.IsInThreadPool)
+                {
+                    list.AddFirst(tmp);
+                    tmp = tmp.PreviousTask;
+                }
+
+                var current = list.First;
+
+                while (current != null)
+                {
+                    current.Value.IsInThreadPool = true;
+                    _jobQueue.Add(current.Value);
+                    current = current.Next;
+                }
             }
-
-
-            // enqueue all tasks that not enqueued 
-            if (a.IsInThreadPool) return;
-            //inc c add.Reset()
-            var list = new LinkedList<ITask>();
-            list.AddFirst(a);
-            var tmp = list.First.Value.PreviousTask;
-            while (tmp != null && !tmp.IsInThreadPool)
-            {
-                list.AddFirst(tmp);
-                tmp = tmp.PreviousTask;
-            }
-
-            var current = list.First;
-
-            while (current != null)
-            {
-                current.Value.IsInThreadPool = true;
-                _jobQueue.Add(current.Value);
-                current = current.Next;
-            }
-
-            _readerWriterLock.ExitReadLock();
         }
 
         public void Dispose()
         {
-            if (IsDisposed) return;
-            _readerWriterLock.EnterWriteLock();
-            if (IsDisposed)
+            lock (_disposeLock)
             {
-                _readerWriterLock.ExitWriteLock();
-                return;
-            }
+                if (IsDisposed) return;
 
-            IsDisposed = true;
-            //notify all workers that no more task would added to queue
-            _jobQueue.CompleteAdding();
-            _readerWriterLock.ExitWriteLock();
+                IsDisposed = true;
+                //notify all workers that no more task would added to queue
+                _jobQueue.CompleteAdding();
+
+                foreach (var thread in _threads)
+                {
+                    thread.Join();
+                }
+
+                _jobQueue.Dispose();
+                GC.SuppressFinalize(this);
+            }
         }
     }
 }

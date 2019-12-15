@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace MyThreadPool
 {
-    public class MyTask<TResult> : IMyTask<TResult>, IDisposable
+    public class MyTask<TResult> : IMyTask<TResult>
     {
         public bool IsCompleted { get; private set; }
         public bool IsFailed { get; private set; }
@@ -70,24 +70,7 @@ namespace MyThreadPool
             return new MyTask<TNewResult>(() => func.Invoke(Result), this);
         }
 
-
-        private void _execute()
-        {
-            if (IsCompleted || IsFailed) return; // already computed
-            try
-            {
-                Result = Job.Invoke();
-                IsCompleted = true;
-                _manualResetEvent.Set();
-            }
-            catch (Exception e)
-            {
-                _exception = new AggregateException("AggregateException", e);
-                IsFailed = true;
-                _manualResetEvent.Set();
-            }
-        }
-
+        
         public void Execute()
         {
             if (!IsInThreadPool) throw new AggregateException("User could not explicitly call this method");

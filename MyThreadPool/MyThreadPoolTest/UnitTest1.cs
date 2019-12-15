@@ -20,6 +20,7 @@ namespace MyThreadPoolTest
             threadPool.Enqueue(task);
             Assert.AreEqual(5, task.Result);
             threadPool.Dispose();
+            task.Dispose();
         }
 
         [Test]
@@ -54,6 +55,9 @@ namespace MyThreadPoolTest
                     Assert.AreEqual(1, task1.Result);
                     Assert.AreEqual(3, task2.Result);
                     Assert.AreEqual(4, task3.Result);
+                    task1.Dispose();
+                    task2.Dispose();
+                    task3.Dispose();
                 });
                 threads.Add(thread);
                 thread.Start();
@@ -92,6 +96,10 @@ namespace MyThreadPoolTest
             Assert.AreEqual("Good!", task3.Result);
             Assert.AreEqual("That a lie!!!", task4.Result);
             threadPool.Dispose();
+            task1.Dispose();
+            task2.Dispose();
+            task3.Dispose();
+            task4.Dispose();
         }
 
         [Test]
@@ -126,6 +134,9 @@ namespace MyThreadPoolTest
                     Assert.AreEqual(true, threadPool.IsAllWorkersAlive());
                     Assert.AreEqual(4, task3.Result);
                     Assert.AreEqual(true, threadPool.IsAllWorkersAlive());
+                    task1.Dispose();
+                    task2.Dispose();
+                    task3.Dispose();
                 });
                 threads.Add(thread);
                 thread.Start();

@@ -23,7 +23,7 @@ namespace MyThreadPool
     }
 
 
-    public interface IMyTask<out TResult> : ITask
+    public interface IMyTask<out TResult> : ITask,IDisposable
     {
         /// <summary>
         /// If job is not in any ThreadPool then exception should be thrown
