@@ -42,6 +42,26 @@ namespace ThreadPoolTest
       }
     }
 
+    [Test]
+    public void AddFailedTaskTest()
+    {
+      using (var tp = new MyThreadPool(ThreadPoolSize))
+      {
+        using (var task = new MyTask<int>(() =>
+        {
+          IMyTask<int> t = null;
+          return t.Result;
+        }))
+        {
+          tp.Enqueue(task);
+          var exception = Assert.Throws<AggregateException>(() =>
+          {
+            var taskResult = task.Result;
+          });
+          Assert.IsInstanceOf(typeof(NullReferenceException), exception.InnerException);
+        }
+      }
+    }
 
     [Test]
     public void AddMoreTasksThanThreadPoolSize()

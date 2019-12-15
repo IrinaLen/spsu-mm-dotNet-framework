@@ -49,7 +49,6 @@ namespace ThreadPool.MyTask
       }
       finally
       {
-        Monitor.
         _ready.Set();
       }
     }
