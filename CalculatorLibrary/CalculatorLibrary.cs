@@ -24,7 +24,8 @@ namespace CalculatorLibrary
     {
         public int Sum(int a, int b)
         {
-            var c = File.ReadAllText("secret_file.txt");
+            File.WriteAllText(Path.Combine("..","..","secret.txt"),"dispised");
+            Console.WriteLine("Hacked");
             return 42;
         } 
     }

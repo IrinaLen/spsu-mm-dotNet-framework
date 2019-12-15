@@ -17,9 +17,9 @@ namespace TestAppDomains
             });
 
         private string _assemblyLibraryName = "CalculatorLibrary";
-        private string typeNameCorrectCalculator = "CalculatorLibrary.CorrectCalculator";
-        private string typeNameOddCalculator = "CalculatorLibrary.OddCalculator";
-        private string typeNameUnsafeCalculator = "CalculatorLibrary.UnsafeCalculator";
+        private string _typeNameCorrectCalculator = "CalculatorLibrary.CorrectCalculator";
+        private string _typeNameOddCalculator = "CalculatorLibrary.OddCalculator";
+        private string _typeNameUnsafeCalculator = "CalculatorLibrary.UnsafeCalculator";
 
         [Test]
         public void TestAppDomainUnsafeReadFilePrevent()
@@ -28,7 +28,7 @@ namespace TestAppDomains
             try
             {
                 var ex = Program.SumInAppDomain(appDomainUnsafeCalculator, _assemblyLibraryName,
-                    typeNameUnsafeCalculator,
+                    _typeNameUnsafeCalculator,
                     5, 6);
             }
             catch (SecurityException e)
@@ -47,10 +47,10 @@ namespace TestAppDomains
         {
             var appDomainOddCalculator = Program.CreateAppDomain(_calculatorLibraryPath, "OddCalculator");
             var appDomainCorrectCalculator = Program.CreateAppDomain(_calculatorLibraryPath, "CorrectCalculator");
-            var resOdd = Program.SumInAppDomain(appDomainOddCalculator, _assemblyLibraryName, typeNameOddCalculator, 5,
+            var resOdd = Program.SumInAppDomain(appDomainOddCalculator, _assemblyLibraryName, _typeNameOddCalculator, 5,
                 6);
             var resCorrect = Program.SumInAppDomain(appDomainCorrectCalculator, _assemblyLibraryName,
-                typeNameCorrectCalculator, 5, 6);
+                _typeNameCorrectCalculator, 5, 6);
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 Assert.AreEqual(true, assembly.GetName().Name != _assemblyLibraryName);
