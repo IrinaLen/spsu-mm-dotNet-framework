@@ -74,8 +74,7 @@ namespace ThreadPool
                 {
                     CheckDisposed();
                     if (token.IsCancellationRequested)
-                        throw new OperationCanceledException($"Thread {Thread.CurrentThread.Name} have been canceled",
-                            token);
+                        throw new OperationCanceledException($"Thread {Thread.CurrentThread.Name} have been canceled", token);
 
                     var task = _queue.Take(token);
                     task();
