@@ -32,9 +32,6 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
-        <Reference Include="ICalculatorLibrary, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\CalculatorLibrary\bin\Release\ICalculatorLibrary.dll</HintPath>
-        </Reference>
         <Reference Include="System" />
         <Reference Include="System.Core" />
         <Reference Include="System.Data" />
@@ -44,6 +41,13 @@
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\ICalculatorLibrary\ICalculatorLibrary.csproj">
+            <Project>{7D595574-4B88-4D57-BC89-5BF30BD56DE3}</Project>
+            <Name>ICalculatorLibrary</Name>
+        </ProjectReference>
+    </ItemGroup>
+
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.
