@@ -59,20 +59,31 @@ public class Program
             return calculator.Sum(a, b);
         }
 
+        private int SumInner(string assemblyName,Type type,int a,int b)
+        {
+            Assembly.Load(assemblyName);
+            Console.WriteLine($"Actual Sum called in {AppDomain.CurrentDomain.FriendlyName} domain ");
+            var calc = (ICalculator)Activator.CreateInstance(type);
+            return calc.Sum(a, b);
+        }
+
         public void SumAll(Type iType, string assemblyName, int a, int b)
         {
             Assembly.Load(assemblyName);
+            Console.WriteLine($"SumAll called in {AppDomain.CurrentDomain} domain");
             var types = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
                 .Where(p => iType.IsAssignableFrom(p) && p.IsClass);
             foreach (var type in types)
             {
+                var appDomain =  CreateAppDomain(_libraryPath, $"type{type}");
+                var calc = GetProxyCalculator(appDomain);
+                
                 Console.WriteLine($"Calculator {type}:");
 
-                var calc = (ICalculator) Activator.CreateInstance(type);
                 try
                 {
-                    Console.WriteLine($"Result is {calc.Sum(a, b)}");
+                    Console.WriteLine($"Result is {calc.SumInner(assemblyName, type, a, b)}");
                 }
                 catch (Exception e)
                 {
