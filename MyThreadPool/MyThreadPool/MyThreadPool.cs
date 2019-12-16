@@ -65,7 +65,7 @@ namespace MyThreadPool
             {
                 if (_isDisposed) throw new ObjectDisposedException("Thread pool has been disposed.");
                 //thread-safe since only one task can be enqueued 
-                if (task.IsCompleted || task.IsInThreadPool) return;
+                if (task.IsCompleted || task.IsInThreadPool || task.IsFailed) return;
                 //collect intermediate tasks
                 var tasks = new LinkedList<IMyTaskBase>();
                 IMyTaskBase current = task;
