@@ -73,7 +73,7 @@ namespace ThreadPool
           var task = _waitingTasks.Take();
           task.Invoke();
         }
-        catch (InvalidOperationException e)
+        catch (InvalidOperationException)
         {
           return;
         }

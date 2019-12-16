@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ThreadPool;
 using ThreadPool.MyTask;
 
 namespace ThreadPoolTest
 {
-  [TestFixture]
-  public class ThreadPoolTests
+  [TestClass]
+  public class Tests
   {
     private const int ThreadPoolSize = 4;
 
-    [Test]
+    [TestMethod]
     public void AddOneTaskTest()
     {
       using (var tp = new MyThreadPool(ThreadPoolSize))
@@ -25,24 +25,50 @@ namespace ThreadPoolTest
       }
     }
 
-    [Test]
+    [TestMethod]
+    public void RunLotsOfThreadsTest()
+    {
+      var tpSize = 42;
+      var tasksCount = 10;
+      using (var tp = new MyThreadPool(tpSize))
+      {
+        List<IMyTask<int>> tasks = new List<IMyTask<int>>();
+        for (var i = 0; i < tasksCount; i++)
+        {
+          var task = new MyTask<int>(() =>
+          {
+            Thread.Sleep(100);
+            return 2 + 2;
+          });
+          tp.Enqueue(task);
+          tasks.Add(task);
+        }
+        foreach (var task in tasks)
+        {
+          Assert.AreEqual(4, task.Result);
+          task.Dispose();
+        }
+      }
+    }
+
+    [TestMethod]
     public void DisposeThreadPoolTwiceTest()
     {
       var tp = new MyThreadPool(ThreadPoolSize);
       tp.Dispose();
-      Assert.Throws<ObjectDisposedException>(() => tp.Dispose());
+      Assert.ThrowsException<ObjectDisposedException>(() => tp.Dispose());
     }
 
-    [Test]
+    [TestMethod]
     public void AddNullTaskTest()
     {
       using (var tp = new MyThreadPool(ThreadPoolSize))
       {
-        Assert.Throws<ArgumentNullException>(() => tp.Enqueue((IMyTask<int>)null));
+        Assert.ThrowsException<ArgumentNullException>(() => tp.Enqueue((IMyTask<int>)null));
       }
     }
 
-    [Test]
+    [TestMethod]
     public void AddFailedTaskTest()
     {
       using (var tp = new MyThreadPool(ThreadPoolSize))
@@ -54,16 +80,16 @@ namespace ThreadPoolTest
         }))
         {
           tp.Enqueue(task);
-          var exception = Assert.Throws<AggregateException>(() =>
+          var exception = Assert.ThrowsException<AggregateException>(() =>
           {
             var taskResult = task.Result;
           });
-          Assert.IsInstanceOf(typeof(NullReferenceException), exception.InnerException);
+          Assert.IsInstanceOfType(exception.InnerException, typeof(NullReferenceException));
         }
       }
     }
 
-    [Test]
+    [TestMethod]
     public void AddMoreTasksThanThreadPoolSizeTest()
     {
       const int tasksCount = 8;
@@ -89,7 +115,7 @@ namespace ThreadPoolTest
       }
     }
 
-    [Test]
+    [TestMethod]
     public void AddTasksInParallelTest()
     {
       const int parallelThreadsCount = 40;
@@ -115,7 +141,7 @@ namespace ThreadPoolTest
       }
     }
 
-    [Test]
+    [TestMethod]
     public void AddTasksAndCheckThreadsCountTest()
     {
       using (var tp = new MyThreadPool(ThreadPoolSize))
@@ -138,7 +164,7 @@ namespace ThreadPoolTest
       }
     }
 
-    [Test]
+    [TestMethod]
     public void AddTasksAndDisposeThreadPoolTest()
     {
       // IMyTask<int> task1, task2;
@@ -163,7 +189,7 @@ namespace ThreadPoolTest
       }
     }
 
-    [Test]
+    [TestMethod]
     public void EnqueueIntoDisposedThreadPoolTest()
     {
       var tp = new MyThreadPool(ThreadPoolSize);
@@ -180,13 +206,13 @@ namespace ThreadPoolTest
         return 2 + 2;
       }))
       {
-        Assert.Throws<ObjectDisposedException>(() => tp.Enqueue(task2));
+        Assert.ThrowsException<ObjectDisposedException>(() => tp.Enqueue(task2));
       }
 
       task1.Dispose();
     }
 
-    [Test]
+    [TestMethod]
     public void ContinueWithTest()
     {
       using (var tp = new MyThreadPool(ThreadPoolSize))
