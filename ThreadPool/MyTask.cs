@@ -11,28 +11,32 @@ namespace ThreadPool
 
         private AggregateException _exception = null;
 
+        private TResult _result;
+
         public MyTask(Func<TResult> func)
         {
             _function = func;
         }
 
-        private TResult _result;
+        public bool IsCompleted { get; private set; }
+
 
         public TResult Result
         {
             get
             {
                 _manualResetEvent.WaitOne();
-                if (_exception != null)
+                lock (this)
                 {
-                    throw _exception;
-                }
+                    if (_exception != null)
+                    {
+                        throw _exception;
+                    }
 
-                return _result;
+                    return _result;
+                }
             }
         }
-
-        public bool IsCompleted { get; private set; }
 
         public IMyTask<TNewResult> ContinueWith<TNewResult>(Func<TResult, TNewResult> continueWithFunction)
         {
@@ -41,17 +45,20 @@ namespace ThreadPool
 
         public void Execute()
         {
-            try
+            lock (this)
             {
-                _result = _function.Invoke();
-            }
-            catch (Exception e)
-            {
-                _exception = new AggregateException("Task has thrown an exception", e);
-            }
+                try
+                {
+                    _result = _function.Invoke();
+                }
+                catch (Exception e)
+                {
+                    _exception = new AggregateException("Task has thrown an exception", e);
+                }
 
-            IsCompleted = true;
-            _manualResetEvent.Set();
+                IsCompleted = true;
+                _manualResetEvent.Set();
+            }
         }
     }
 }
