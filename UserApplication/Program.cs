@@ -16,11 +16,16 @@ public class Program
     {
         var a = 4;
         var b = 3;
-        var newDomain = CreateAppDomain(_libraryPath, "Calc");
+        AppDomainSetup domainSetup = new AppDomainSetup
+        {
+            ApplicationBase = _libraryPath
+        };
+        var newDomain = AppDomain.CreateDomain("Calc", null, domainSetup);
+
         GetProxyCalculator(newDomain).SumAll(typeof(ICalculator), _libraryName, a, b);
     }
 
-    public static AppDomain CreateAppDomain(string path, string newDomainName)
+    public static AppDomain CreateAppDomainRestricted(string path, string newDomainName)
 
     {
         PermissionSet permissionSet = new PermissionSet(PermissionState.None);
@@ -59,11 +64,11 @@ public class Program
             return calculator.Sum(a, b);
         }
 
-        private int SumInner(string assemblyName,Type type,int a,int b)
+        private int SumInner(string assemblyName, Type type, int a, int b)
         {
             Assembly.Load(assemblyName);
             Console.WriteLine($"Actual Sum called in {AppDomain.CurrentDomain.FriendlyName} domain ");
-            var calc = (ICalculator)Activator.CreateInstance(type);
+            var calc = (ICalculator) Activator.CreateInstance(type);
             return calc.Sum(a, b);
         }
 
@@ -76,9 +81,9 @@ public class Program
                 .Where(p => iType.IsAssignableFrom(p) && p.IsClass);
             foreach (var type in types)
             {
-                var appDomain =  CreateAppDomain(_libraryPath, $"type{type}");
+                var appDomain = CreateAppDomainRestricted(_libraryPath, $"type{type}");
                 var calc = GetProxyCalculator(appDomain);
-                
+
                 Console.WriteLine($"Calculator {type}:");
 
                 try

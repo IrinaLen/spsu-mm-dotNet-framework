@@ -24,7 +24,7 @@ namespace TestAppDomains
         [Test]
         public void TestAppDomainUnsafeReadFilePrevent()
         {
-            var appDomainUnsafeCalculator = Program.CreateAppDomain(_calculatorLibraryPath, "UnsafeCalculator");
+            var appDomainUnsafeCalculator = Program.CreateAppDomainRestricted(_calculatorLibraryPath, "UnsafeCalculator");
             try
             {
                 var ex = Program.SumInAppDomain(appDomainUnsafeCalculator, _assemblyLibraryName,
@@ -45,8 +45,8 @@ namespace TestAppDomains
         [Test]
         public void TestAppDomainSeveralDomains()
         {
-            var appDomainOddCalculator = Program.CreateAppDomain(_calculatorLibraryPath, "OddCalculator");
-            var appDomainCorrectCalculator = Program.CreateAppDomain(_calculatorLibraryPath, "CorrectCalculator");
+            var appDomainOddCalculator = Program.CreateAppDomainRestricted(_calculatorLibraryPath, "OddCalculator");
+            var appDomainCorrectCalculator = Program.CreateAppDomainRestricted(_calculatorLibraryPath, "CorrectCalculator");
             var resOdd = Program.SumInAppDomain(appDomainOddCalculator, _assemblyLibraryName, _typeNameOddCalculator, 5,
                 6);
             var resCorrect = Program.SumInAppDomain(appDomainCorrectCalculator, _assemblyLibraryName,
