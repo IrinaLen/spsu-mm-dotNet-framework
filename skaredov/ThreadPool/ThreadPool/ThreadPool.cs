@@ -79,7 +79,11 @@ namespace ThreadPool
                     var task = _queue.Take(token);
                     task();
                 }
-                catch (Exception)
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (ObjectDisposedException)
                 {
                     return;
                 }
