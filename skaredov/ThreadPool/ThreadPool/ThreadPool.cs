@@ -7,13 +7,13 @@ namespace ThreadPool
 {
     public class ThreadPool: IDisposable
     {
-        public int Capacity { get; }
-        private bool _disposed;
+        private readonly List<Thread> _pool;
         private readonly object _lock = new object();
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
-
-        private readonly List<Thread> _pool;
         private readonly BlockingCollection<Action> _queue = new BlockingCollection<Action>();
+
+        public int Capacity { get; }
+        public bool IsDisposed => _cts.IsCancellationRequested;
 
         public ThreadPool(int capacity)
         {
@@ -45,9 +45,10 @@ namespace ThreadPool
         {
             lock (_lock)
             {
-                if (_disposed) return;
+                if (IsDisposed) return;
 
                 _cts.Cancel();
+                _queue.CompleteAdding();
                 _pool.ForEach(thread =>
                 {
                     try
@@ -60,41 +61,31 @@ namespace ThreadPool
                     }
                 });
                 _pool.Clear();
-                _queue.CompleteAdding();
                 _queue.Dispose();
                 _cts.Dispose();
-                _disposed = true;
             }
         }
 
         private void Worker(CancellationToken token)
         {
-            while (true)
-                try
-                {
-                    CheckDisposed();
-                    if (token.IsCancellationRequested)
-                        throw new OperationCanceledException($"Thread {Thread.CurrentThread.Name} have been canceled", token);
-
-                    var task = _queue.Take(token);
-                    task();
-                }
-                catch (OperationCanceledException)
-                {
-                    return;
-                }
-                catch (ObjectDisposedException)
-                {
-                    return;
-                }
+            try
+            {
+                // try to get and execute task from queue until token is canceled
+                foreach (var task in _queue.GetConsumingEnumerable(token)) task();
+            }
+            catch (OperationCanceledException)
+            {
+                // calculate remaining tasks in queue and stop thread
+                foreach (var task in _queue.GetConsumingEnumerable()) task();
+            }
         }
 
         private void CheckDisposed()
         {
             lock (_lock)
             {
-                if (_disposed)
-                    throw new ObjectDisposedException(nameof(ThreadPool), "The collection has been disposed.");
+                if (IsDisposed)
+                    throw new ObjectDisposedException(nameof(ThreadPool), "The ThreadPool has been disposed.");
             }
         }
     }

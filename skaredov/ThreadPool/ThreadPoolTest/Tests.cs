@@ -10,14 +10,16 @@ namespace ThreadPoolTest
 {
     public class Tests
     {
-        private readonly Stopwatch _sp = new Stopwatch();
         private readonly Random _rnd = new Random(0);
+        private readonly Stopwatch _sp = new Stopwatch();
+        private int _capacity = 5;
         private ThreadPool.ThreadPool _pool;
 
-        private void Init(int capacity)
+        [SetUp]
+        public void Init()
         {
-            Debug.WriteLine($"\tinit threadpool with cap: {capacity}");
-            _pool = new ThreadPool.ThreadPool(capacity);
+            Debug.WriteLine($"\tinit threadpool with cap: {_capacity}");
+            _pool = new ThreadPool.ThreadPool(_capacity);
         }
 
         private IMyTask<string> GetTask(int number)
@@ -34,19 +36,16 @@ namespace ThreadPoolTest
         [Test]
         public void CheckThreadsCount()
         {
-            const int capacity = 5;
-            Init(capacity);
-            Assert.AreEqual(capacity, _pool.Capacity);
+            Assert.AreEqual(_capacity, _pool.Capacity);
         }
 
         [Test]
         public void AddTaskTest()
         {
             Debug.WriteLine("==== AddTask ====");
-            const int capacity = 1;
-            Init(capacity);
-            var task = GetTask(0);
+            _capacity = 1;
 
+            var task = GetTask(0);
             Debug.WriteLine("\tenqueue one task");
             _pool.Enqueue(task);
 
@@ -57,14 +56,11 @@ namespace ThreadPoolTest
         }
 
         [Test]
-        public void AddManyTaskTest()
+        public void AddManyTasksTest()
         {
-            Debug.WriteLine("==== AddManyTask ====");
-            const int capacity = 5;
-            Init(capacity);
-
+            Debug.WriteLine("==== AddManyTasks ====");
             var tasks = new List<IMyTask<string>>();
-            for (var i = 0; i < capacity << 1; i++)
+            for (var i = 0; i < _capacity << 1; i++)
             {
                 tasks.Add(GetTask(i));
                 Debug.WriteLine($"\tenqueue task #{i}");
@@ -73,7 +69,7 @@ namespace ThreadPoolTest
 
             var sp = new Stopwatch();
             sp.Start();
-            for (var i = 0; i < capacity << 1; i++)
+            for (var i = 0; i < _capacity << 1; i++)
             {
                 Debug.WriteLine($"\twait for result #{i}");
                 _sp.Restart();
@@ -85,11 +81,47 @@ namespace ThreadPoolTest
         }
 
         [Test]
+        public void AddTasksAndDisposeTest()
+        {
+            Debug.WriteLine("==== AddTasksAndDispose ====");
+            var task1 = MyTask<string>.New(() =>
+            {
+                Debug.WriteLine("\t\tinside task #1");
+                Thread.Sleep(2000);
+                Debug.WriteLine("\t\treturn from task #1");
+                return "task #1";
+            });
+            var task2 = task1.ContinueWith(result =>
+            {
+                Debug.WriteLine("\t\tinside task #2");
+                Thread.Sleep(100);
+                Debug.WriteLine("\t\treturn from task #2");
+                return $"task #2 after {result}";
+            });
+            Debug.WriteLine("\tenqueue task #1");
+            _pool.Enqueue(task1);
+            Debug.WriteLine("\tenqueue task #2");
+            _pool.Enqueue(task2);
+
+            _sp.Start();
+            Debug.WriteLine("\twait for result #1");
+            Debug.WriteLine($"\tresult #1: {task1.Result} in {_sp.ElapsedMilliseconds} ms");
+
+            Debug.WriteLine("\tdispose threadpool");
+            _pool.Dispose();
+
+            Debug.WriteLine("\ttry to get result #2:");
+            _sp.Restart();
+            Debug.WriteLine($"\tresult #2: {task2.Result} in {_sp.ElapsedMilliseconds} ms");
+            Debug.WriteLine("=====================");
+        }
+
+        [Test]
         public void FailedTaskTest()
         {
             Debug.WriteLine("==== FailedTask ====");
-            const int capacity = 1;
-            Init(capacity);
+            _capacity = 1;
+
             var task = MyTask<string>.New(() =>
             {
                 var list = new List<string> {"task #0"};
@@ -118,14 +150,13 @@ namespace ThreadPoolTest
         public void ContinueWithTest()
         {
             Debug.WriteLine("==== ContinueWith ====");
-            const int capacity = 3;
-            Init(capacity);
+            _capacity = 3;
 
             var task = GetTask(0);
             Debug.WriteLine("\tenqueue task #0");
             _pool.Enqueue(task);
             var tasks = new List<IMyTask<string>> {task};
-            for (var i = 1; i < capacity << 1; i++)
+            for (var i = 1; i < _capacity << 1; i++)
             {
                 var number = i;
                 task = task.ContinueWith(result =>
@@ -140,7 +171,7 @@ namespace ThreadPoolTest
 
             var sp = new Stopwatch();
             sp.Start();
-            for (var i = 0; i < capacity << 1; i++)
+            for (var i = 0; i < _capacity << 1; i++)
             {
                 Debug.WriteLine($"\twait for result #{i}");
                 _sp.Restart();
@@ -155,7 +186,7 @@ namespace ThreadPoolTest
         public void Dispose()
         {
             _sp.Reset();
-            _pool.Dispose();
+            if (!_pool.IsDisposed) _pool.Dispose();
         }
     }
 }
