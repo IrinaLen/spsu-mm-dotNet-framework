@@ -1,19 +1,19 @@
-﻿using CalculatorInterface;
-using System;
+﻿using System;
 using System.IO;
+
+using CalcLibInterface;
+
 
 namespace CalcRealizationLib
 {
+
     [Serializable]
-    public class CalcRealization : ICalculator
+    public class HackerCalcRealization : ICalculator
     {
         public int Sum(int a, int b)
         {
-            return a+b;
-        }
-        public void ReadFileSystem()
-        {
             File.ReadAllText("C:\\Temp\\file.txt");
+            return a + b;
         }
     }
 }
