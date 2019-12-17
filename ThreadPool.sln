@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreadPool", "ThreadPool\ThreadPool.csproj", "{7B46314C-AC95-4953-ADA0-6FBB2A4059BE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThreadPoolTest", "ThreadPoolTest\ThreadPoolTest.csproj", "{B8D874D2-1339-41E7-9967-F9C7FDB4CDD5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7B46314C-AC95-4953-ADA0-6FBB2A4059BE} = {7B46314C-AC95-4953-ADA0-6FBB2A4059BE}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
