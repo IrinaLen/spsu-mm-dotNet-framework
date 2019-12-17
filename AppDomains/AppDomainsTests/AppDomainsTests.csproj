@@ -53,6 +53,18 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CalculatorInterfaceLibrary\CalculatorInterfaceLibrary.csproj">
+      <Project>{7b950637-45dc-47a5-9f8f-6918f33f2f70}</Project>
+      <Name>CalculatorInterfaceLibrary</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MachineLearningCalculatorImplementationLibrary\MachineLearningCalculatorImplementationLibrary.csproj">
+      <Project>{be4af0f9-d2ce-4bca-8a59-c9b0a176e8c9}</Project>
+      <Name>MachineLearningCalculatorImplementationLibrary</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SimpleCalculatorImplementationLibrary\SimpleCalculatorImplementationLibrary.csproj">
+      <Project>{f8e6d5d1-f90a-414d-8746-0ec55ca43df0}</Project>
+      <Name>SimpleCalculatorImplementationLibrary</Name>
+    </ProjectReference>
     <ProjectReference Include="..\UserApplication\UserApplication.csproj">
       <Project>{8388b5d0-d42b-4e15-aebf-3568cf71485e}</Project>
       <Name>UserApplication</Name>
