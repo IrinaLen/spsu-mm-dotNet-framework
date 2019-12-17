@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using NUnit.Framework;
 using ThreadPool;
 
 namespace ThreadPoolTest
 {
-    [TestFixture]
+    [TestClass]
     public class Tests
     {
         private const int SimpleResult = 42;
@@ -18,32 +18,32 @@ namespace ThreadPoolTest
             return SimpleResult;
         }
 
-        [Test]
+        [TestMethod]
         public void OneTask()
         {
             var threadPool = new ThreadPool.ThreadPool(1);
             IMyTask<int> task = new MyTask<int>(SimpleFunction);
             threadPool.Enqueue(task);
-            Assert.False(task.IsCompleted);
+            Assert.IsFalse(task.IsCompleted);
             Assert.AreEqual(SimpleResult, task.Result);
-            Assert.True(task.IsCompleted);
+            Assert.IsTrue(task.IsCompleted);
             threadPool.Dispose();
         }
 
-        [Test]
+        [TestMethod]
         public void TestException()
         {
             var threadPool = new ThreadPool.ThreadPool(1);
             var task = new MyTask<int>(() => { throw new NotImplementedException(); });
             threadPool.Enqueue(task);
-            Assert.Throws<AggregateException>(() =>
+            Assert.ThrowsException<AggregateException>(() =>
             {
                 var result = task.Result;
             });
             threadPool.Dispose();
         }
 
-        [Test]
+        [TestMethod]
         public void ManyTasks()
         {
             int threadsNumber = 4;
@@ -64,7 +64,7 @@ namespace ThreadPoolTest
             threadPool.Dispose();
         }
 
-        [Test]
+        [TestMethod]
         public void DisposedTest()
         {
             var threadPool = new ThreadPool.ThreadPool(1);
@@ -74,10 +74,10 @@ namespace ThreadPoolTest
             threadPool.Dispose();
 
             Assert.AreEqual(SimpleResult, taskToFinish.Result);
-            Assert.Throws<InvalidOperationException>(() => threadPool.Enqueue(taskToReject));
+            Assert.ThrowsException<InvalidOperationException>(() => threadPool.Enqueue(taskToReject));
         }
 
-        [Test]
+        [TestMethod]
         public void ContinueWith()
         {
             var threadPool = new ThreadPool.ThreadPool(1);
@@ -95,7 +95,7 @@ namespace ThreadPoolTest
             threadPool.Dispose();
         }
 
-        [Test]
+        [TestMethod]
         public void NumberOfThreadsTest()
         {
             int threadsNumber = 20;
