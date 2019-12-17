@@ -4,7 +4,7 @@
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-        <ProjectGuid>{DDA5D880-D3D0-45E8-9ED8-D5C7116E391D}</ProjectGuid>
+        <ProjectGuid>{3AFBD034-D312-437F-BDD5-26B8D37A3F04}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AppDesignerFolder>Properties</AppDesignerFolder>
         <RootNamespace>CalculatorLibrary</RootNamespace>
@@ -41,13 +41,14 @@
         <Compile Include="CalculatorLibrary.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
+    
     <ItemGroup>
         <ProjectReference Include="..\ICalculatorLibrary\ICalculatorLibrary.csproj">
-            <Project>{7D595574-4B88-4D57-BC89-5BF30BD56DE3}</Project>
+            <Project>{2d7dd6a1-2f3b-4943-988d-77a8044e58fd}</Project>
             <Name>ICalculatorLibrary</Name>
         </ProjectReference>
     </ItemGroup>
-
+    
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.

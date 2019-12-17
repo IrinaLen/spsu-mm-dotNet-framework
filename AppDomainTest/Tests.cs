@@ -12,7 +12,7 @@ namespace TestAppDomains
         private string _calculatorLibraryPath =
             Path.Combine(new[]
             {
-                Directory.GetParent(TestContext.CurrentContext.TestDirectory).Parent.Parent.Parent.FullName,
+                Directory.GetParent(TestContext.CurrentContext.TestDirectory).Parent.Parent.FullName,
                 "CalculatorLibrary", "bin", "Release"
             });
 
@@ -24,7 +24,8 @@ namespace TestAppDomains
         [Test]
         public void TestAppDomainUnsafeReadFilePrevent()
         {
-            var appDomainUnsafeCalculator = Program.CreateAppDomainRestricted(_calculatorLibraryPath, "UnsafeCalculator");
+            var appDomainUnsafeCalculator =
+                Program.CreateAppDomainRestricted(_calculatorLibraryPath, "UnsafeCalculator");
             try
             {
                 var ex = Program.SumInAppDomain(appDomainUnsafeCalculator, _assemblyLibraryName,
@@ -38,6 +39,7 @@ namespace TestAppDomains
 
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
+
                 Assert.AreEqual(true, assembly.GetName().Name != _assemblyLibraryName);
             }
         }
@@ -46,7 +48,8 @@ namespace TestAppDomains
         public void TestAppDomainSeveralDomains()
         {
             var appDomainOddCalculator = Program.CreateAppDomainRestricted(_calculatorLibraryPath, "OddCalculator");
-            var appDomainCorrectCalculator = Program.CreateAppDomainRestricted(_calculatorLibraryPath, "CorrectCalculator");
+            var appDomainCorrectCalculator =
+                Program.CreateAppDomainRestricted(_calculatorLibraryPath, "CorrectCalculator");
             var resOdd = Program.SumInAppDomain(appDomainOddCalculator, _assemblyLibraryName, _typeNameOddCalculator, 5,
                 6);
             var resCorrect = Program.SumInAppDomain(appDomainCorrectCalculator, _assemblyLibraryName,

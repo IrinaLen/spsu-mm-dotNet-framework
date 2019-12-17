@@ -10,19 +10,23 @@ using ICalculatorLibrary;
 public class Program
 {
     private static string _libraryPath = Path.Combine("..", "..", "..", "CalculatorLibrary", "bin", "Release");
-    private static string _libraryName = "CalculatorLibrary";
+    private static string _libraryName = "CalculatorLibrary.dll";
+    private static string _assemblyName = "CalculatorLibrary";
 
-    public static void Main(string[] args)
+    public static void Main()
     {
         var a = 4;
         var b = 3;
         AppDomainSetup domainSetup = new AppDomainSetup
         {
-            ApplicationBase = _libraryPath
+            ApplicationBase = Path.GetFullPath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
         };
+
         var newDomain = AppDomain.CreateDomain("Calc", null, domainSetup);
 
-        GetProxyCalculator(newDomain).SumAll(typeof(ICalculator), _libraryName, a, b);
+        GetProxyCalculator(newDomain)
+            .SumAll(typeof(ICalculator), _assemblyName, Path.Combine(_libraryPath, _libraryName), a, b);
+        Console.ReadKey();
     }
 
     public static AppDomain CreateAppDomainRestricted(string path, string newDomainName)
@@ -40,11 +44,7 @@ public class Program
 
     public static int SumInAppDomain(AppDomain appDomain, string assemblyName, string typeName, int a, int b)
     {
-        ProxyObjectCalculator proxyCalculator = (ProxyObjectCalculator) Activator.CreateInstanceFrom(
-            appDomain, typeof(ProxyObjectCalculator).Assembly.ManifestModule.FullyQualifiedName,
-            typeof(ProxyObjectCalculator).FullName).Unwrap();
-
-        return proxyCalculator.Sum(assemblyName, typeName, a, b);
+        return GetProxyCalculator(appDomain).Sum(assemblyName, typeName, a, b);
     }
 
     public static ProxyObjectCalculator GetProxyCalculator(AppDomain appDomain)
@@ -72,9 +72,9 @@ public class Program
             return calc.Sum(a, b);
         }
 
-        public void SumAll(Type iType, string assemblyName, int a, int b)
+        public void SumAll(Type iType, string assemblyName, string assemblyPath, int a, int b)
         {
-            Assembly.Load(assemblyName);
+            Assembly.LoadFrom(assemblyPath);
             Console.WriteLine($"SumAll called in {AppDomain.CurrentDomain} domain");
             var types = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
@@ -90,9 +90,9 @@ public class Program
                 {
                     Console.WriteLine($"Result is {calc.SumInner(assemblyName, type, a, b)}");
                 }
-                catch (Exception e)
+                catch (SecurityException e)
                 {
-                    Console.WriteLine($"Result is{e.Message}");
+                    Console.WriteLine($"Some malicious code try to write to your filesystem");
                 }
             }
         }
