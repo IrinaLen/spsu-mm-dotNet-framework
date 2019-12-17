@@ -6,7 +6,7 @@ using CalculatorInterfaceLibrary;
 namespace UserApplication
 {
     //loaded into its own app domain
-    public class CalculatorProxy : MarshalByRefObject
+    public class CalculatorProxy : MarshalByRefObject, ICalculator
     {
         public string AssemblyName { get; set; }
         public string TypeName { get; set; }

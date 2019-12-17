@@ -17,7 +17,7 @@ namespace AppDomainsTests
         {
             get
             {
-                var untrustedPath = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.FullName;
+                var untrustedPath = Directory.GetParent(TestContext.CurrentContext.TestDirectory).Parent.Parent.FullName;
                 var untrustedAssemblies = new List<string>();
                 foreach (var name in libraryNames)
                 {
