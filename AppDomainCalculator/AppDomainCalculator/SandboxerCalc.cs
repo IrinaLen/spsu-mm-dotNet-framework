@@ -15,8 +15,28 @@ namespace myCalcApp
     {
         static void Main()
         {
+            string _pathToAssemblyFolder = @"..\..\..\CalcRealizationLib\bin\Debug";
+            string _assemblyName = "CalcRealizationLib";
+            string _calcClass = "CalcRealizationLib.CalcRealization";
+            string _hackerClass = "CalcRealizationLib.HackerCalcRealization";
+            string _methodToExecuteName = "Sum";
+            Object[] parameters = { 45, 25 };
+            Console.WriteLine("Result of Sum(45,25) is:");
+            Console.WriteLine(ExecuteUntrustedCode(_pathToAssemblyFolder, _assemblyName, _calcClass, _methodToExecuteName, parameters));
 
+            Console.WriteLine("Try to run hacker method:");
+            try
+            {
+                ExecuteUntrustedCode(_pathToAssemblyFolder, _assemblyName, _hackerClass, _methodToExecuteName, parameters);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.InnerException);
+                Console.WriteLine("AHA we catched a hacker!");
+            }
+            Console.ReadKey();
         }
+
         public static object ExecuteUntrustedCode(string pathToRealization, string assemblyName, string className, string methodToExecuteName, object[] parameters)
         {
             //Setting the AppDomainSetup
