@@ -3,7 +3,6 @@ using System.IO;
 
 namespace Calculators
 {
-    [Serializable]
     public class DefaultCalculator : ICalculator.ICalculator 
     {
         public int Sum(int a, int b)
@@ -12,7 +11,6 @@ namespace Calculators
         }
     }
     
-    [Serializable]
     public class BrokenCalculator : ICalculator.ICalculator 
     {
         public int Sum(int a, int b)
@@ -21,13 +19,8 @@ namespace Calculators
         }
     }
 
-    [Serializable]
     public class HackingCalculator : ICalculator.ICalculator
     {
-        public HackingCalculator()
-        {
-            File.WriteAllText("sample.txt", "Hello world!");
-        }
         public int Sum(int a, int b)
         {
             File.WriteAllText("sample.txt", "Hello world!");
