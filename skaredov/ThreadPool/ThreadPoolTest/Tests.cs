@@ -15,11 +15,10 @@ namespace ThreadPoolTest
         private int _capacity = 5;
         private ThreadPool.ThreadPool _pool;
 
-        [SetUp]
-        public void Init()
+        private void Init(int capacity)
         {
-            Debug.WriteLine($"\tinit threadpool with cap: {_capacity}");
-            _pool = new ThreadPool.ThreadPool(_capacity);
+            Debug.WriteLine($"\tinit threadpool with cap: {capacity}");
+            _pool = new ThreadPool.ThreadPool(capacity);
         }
 
         private IMyTask<string> GetTask(int number)
@@ -36,6 +35,7 @@ namespace ThreadPoolTest
         [Test]
         public void CheckThreadsCount()
         {
+            Init(_capacity);
             Assert.AreEqual(_capacity, _pool.Capacity);
         }
 
@@ -44,7 +44,7 @@ namespace ThreadPoolTest
         {
             Debug.WriteLine("==== AddTask ====");
             _capacity = 1;
-
+            Init(_capacity);
             var task = GetTask(0);
             Debug.WriteLine("\tenqueue one task");
             _pool.Enqueue(task);
@@ -59,6 +59,7 @@ namespace ThreadPoolTest
         public void AddManyTasksTest()
         {
             Debug.WriteLine("==== AddManyTasks ====");
+            Init(_capacity);
             var tasks = new List<IMyTask<string>>();
             for (var i = 0; i < _capacity << 1; i++)
             {
@@ -84,6 +85,8 @@ namespace ThreadPoolTest
         public void AddTasksAndDisposeTest()
         {
             Debug.WriteLine("==== AddTasksAndDispose ====");
+            _capacity = 1;
+            Init(_capacity);
             var task1 = MyTask<string>.New(() =>
             {
                 Debug.WriteLine("\t\tinside task #1");
@@ -121,7 +124,7 @@ namespace ThreadPoolTest
         {
             Debug.WriteLine("==== FailedTask ====");
             _capacity = 1;
-
+            Init(_capacity);
             var task = MyTask<string>.New(() =>
             {
                 var list = new List<string> {"task #0"};
@@ -151,7 +154,7 @@ namespace ThreadPoolTest
         {
             Debug.WriteLine("==== ContinueWith ====");
             _capacity = 3;
-
+            Init(_capacity);
             var task = GetTask(0);
             Debug.WriteLine("\tenqueue task #0");
             _pool.Enqueue(task);
@@ -185,6 +188,7 @@ namespace ThreadPoolTest
         [TearDown]
         public void Dispose()
         {
+            _capacity = 5;
             _sp.Reset();
             if (!_pool.IsDisposed) _pool.Dispose();
         }
