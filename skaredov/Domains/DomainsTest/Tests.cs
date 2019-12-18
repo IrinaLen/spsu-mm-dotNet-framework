@@ -10,7 +10,7 @@ namespace DomainsTest
     [TestFixture]
     public class Tests
     {
-        private static readonly string _root = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.FullName;
+        private static readonly string _root = Directory.GetParent(TestContext.CurrentContext.TestDirectory).Parent.Parent.FullName;
         private static readonly string _dumb = "DumbCalculatorLibrary";
         private static readonly string _ultra = "UltraCalculatorLibrary";
 
