@@ -31,11 +31,15 @@ namespace UltraCalculatorLibrary
                 Console.WriteLine("and let's write some flags..");
                 var buffer = new byte[16];
                 new Random().NextBytes(buffer);
-                File.WriteAllText(".flag", Convert.ToBase64String(buffer));
+                File.WriteAllText(Path.Combine(home, ".flag"), Convert.ToBase64String(buffer));
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                File.WriteAllText(".crack", "okay, bang-bang");
+                Console.WriteLine($"ugh, ultra can't get the its precious: {e.Message}");
+                Console.WriteLine("then, it will write some stuff to current directory..");
+                var path = Directory.GetCurrentDirectory();
+                Console.WriteLine($"Current directory: {path}");
+                File.WriteAllText(Path.Combine(path, ".crack"), "okay, bang-bang");
             }
 
             return Convert.ToInt32(Math.E + Math.PI);

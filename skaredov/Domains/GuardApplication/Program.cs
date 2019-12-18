@@ -41,6 +41,8 @@ namespace GuardApplication
                         }
                         catch (SecurityException e)
                         {
+                            PrintDelimiter();
+                            Console.WriteLine($"wow, someone was catched: {calculator.Domain.FriendlyName}");
                             Console.WriteLine(e.Message);
                         }
                         finally
@@ -50,6 +52,7 @@ namespace GuardApplication
                     }
                 }
             });
+            Console.ReadKey();
         }
 
         #region utils
