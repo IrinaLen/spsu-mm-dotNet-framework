@@ -49,20 +49,20 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="UnitTest1.cs" />
+    <Compile Include="UnitTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Application\Application.csproj">
+      <Project>{a67a2b80-c8b8-42a5-8b29-7ec5eda2193d}</Project>
+      <Name>Application</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Calculators\Calculators.csproj">
       <Project>{9485fcfa-2b43-404d-aa94-aeb2f6791f58}</Project>
       <Name>Calculators</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ConsoleApplication1\ConsoleApplication1.csproj">
-      <Project>{A67A2B80-C8B8-42A5-8B29-7EC5EDA2193D}</Project>
-      <Name>ConsoleApplication1</Name>
     </ProjectReference>
     <ProjectReference Include="..\ICalculator\ICalculator.csproj">
       <Project>{2744f0fe-518c-4e94-8f17-484f2a28521f}</Project>

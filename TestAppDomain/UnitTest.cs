@@ -1,5 +1,5 @@
 ﻿using System;
-using ConsoleApplication1;
+using Application;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace TestAppDomain
@@ -8,7 +8,7 @@ namespace TestAppDomain
     public class Tests
     {
         [TestMethod]
-        public void TestMethod1()
+        public void TestAll()
         {
             int a = 4, b = 5;
             var results = Program.BaseClass().Run(a, b);
@@ -16,15 +16,15 @@ namespace TestAppDomain
             {
                 if (result.implementationName == "DefaultCalculator")
                 {
-                    Assert.AreEqual(result.result.value, a + b);
+                    Assert.AreEqual(result.Result.Value, a + b);
                 }
                 else if (result.implementationName == "BrokenCalculator")
                 {
-                    Assert.AreNotEqual(result.result.value, a + b);
+                    Assert.AreNotEqual(result.Result.Value, a + b);
                 }
                 else if (result.implementationName == "HackingCalculator")
                 {
-                    Assert.AreEqual(result.result, null);
+                    Assert.AreEqual(result.Result, null);
                 }
             }
         }

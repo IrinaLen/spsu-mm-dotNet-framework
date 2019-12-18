@@ -5,23 +5,22 @@ using System.Security;
 using System.Security.Permissions;
 using System.Linq;
 using System.Collections.Generic;
-using Calculators;
 
-namespace ConsoleApplication1
+namespace Application
 {
     public class Program : MarshalByRefObject
     {
         public static void Main(string[] args)
         {
-            var result = BaseClass().Run(5, 6);
-            foreach (var current in result)
+            var results = BaseClass().Run(5, 6);
+            foreach (var result in results)
             {
-                if (current.result == null)
+                if (result.Result == null)
                 {
-                    Console.WriteLine(current.implementationName + " is vulnerable");
+                    Console.WriteLine(result.implementationName + " is vulnerable");
                 } else
                 {
-                    Console.WriteLine(current.implementationName + " result is: " + current.result.value);
+                    Console.WriteLine(result.implementationName + " result is: " + result.Result.Value);
                 }
             }
             Console.Read();
@@ -30,56 +29,55 @@ namespace ConsoleApplication1
         public static Program BaseClass()
         {
             var baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var setup = new AppDomainSetup { ApplicationBase = Path.GetFullPath(baseDir) };
-            var wholeDomain = AppDomain.CreateDomain("Main Domain", null, setup);
-            var curentClass = (Program)wholeDomain.CreateInstanceAndUnwrap(typeof(Program).Assembly.FullName, typeof(Program).FullName);
-            return curentClass;
+            var appDomainSetup = new AppDomainSetup { ApplicationBase = Path.GetFullPath(baseDir) };
+            var appDomain = AppDomain.CreateDomain("Main Domain", null, appDomainSetup);
+            var instance = (Program)appDomain.CreateInstanceAndUnwrap(typeof(Program).Assembly.FullName, typeof(Program).FullName);
+            return instance;
         }
 
-        public List<TypeInfo> Implementations()
+        public List<TypeInfo> GetCalculatorImplementations()
         {
             var solutionDirectory = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
             var pathToLibrary = Path.Combine(solutionDirectory, "Calculators", "bin", "debug", "Calculators.dll");
             var assembly = Assembly.LoadFrom(pathToLibrary);
             var calculatorImplementations = assembly.DefinedTypes.Where((type) => type.ImplementedInterfaces.Contains(typeof(ICalculator.ICalculator)));
-
             return calculatorImplementations.ToList();
         }
 
-        public PermissionSet Permission()
+        public PermissionSet GetPermissions()
         {
-            var perm = new PermissionSet(PermissionState.None);
-            perm.AddPermission(new SecurityPermission(SecurityPermissionFlag.Execution));
-            string path = Path.GetPathRoot(Directory.GetCurrentDirectory());
-            perm.AddPermission(new FileIOPermission(FileIOPermissionAccess.NoAccess, path));
-            return perm;
+            var permissions = new PermissionSet(PermissionState.None);
+            permissions.AddPermission(new SecurityPermission(SecurityPermissionFlag.Execution));
+            string rootDirectory = Path.GetPathRoot(Directory.GetCurrentDirectory());
+            permissions.AddPermission(new FileIOPermission(FileIOPermissionAccess.NoAccess, rootDirectory));
+            return permissions;
         }
 
-        public AppDomainSetup DomainSetup() 
+        public AppDomainSetup GetDomainSetup() 
         {
-            var setup = new AppDomainSetup();
-            setup.ApplicationBase = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
-            return setup;
+            var appDomainSetup = new AppDomainSetup();
+            appDomainSetup.ApplicationBase = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+            return appDomainSetup;
         }
 
-        public CalculatorResult Calculate(int a, int b, TypeInfo typeInfo, AppDomainSetup domainSetup, PermissionSet perm)
+        public CalculatorResult Calculate(int a, int b, TypeInfo typeInfo, AppDomainSetup appDomainSetup, PermissionSet permissions)
         {
-            AppDomain securedDomain = AppDomain.CreateDomain(typeInfo.Name, null, domainSetup, perm);
+            AppDomain appDomain = AppDomain.CreateDomain(typeInfo.Name, null, appDomainSetup, permissions);
             Type thirdParty = typeof(CurrentCalculator);
-            var instance = securedDomain.CreateInstanceAndUnwrap(thirdParty.Assembly.FullName, thirdParty.FullName);
+            var instance = appDomain.CreateInstanceAndUnwrap(thirdParty.Assembly.FullName, thirdParty.FullName);
             var calculator = (CurrentCalculator)instance;
             var result = new CalculatorResult(typeInfo.Name);
             result.implementationName = typeInfo.Name;
             try
             {
-                result.result = new CalculatorResult.ResultValue(calculator.calc(a, b, typeInfo));
+                result.Result = new CalculatorResult.ResultValue(calculator.calc(a, b, typeInfo));
             }
             catch (SecurityException exception)
             {
             }
             finally
             {
-                AppDomain.Unload(securedDomain);
+                AppDomain.Unload(appDomain);
             }
             return result;
         }
@@ -88,15 +86,15 @@ namespace ConsoleApplication1
         public List<CalculatorResult> Run(int a, int b)
         {
 
-            var calculatorImplementations = Implementations();
-            var perm = Permission();
-            var domainSetup = DomainSetup();
+            var calculatorImplementations = GetCalculatorImplementations();
+            var permissions = GetPermissions();
+            var appDomainSetup = GetDomainSetup();
 
             var result = new List<CalculatorResult>();
 
-            foreach(var calc in calculatorImplementations)
+            foreach(var calculator in calculatorImplementations)
             {
-                result.Add(Calculate(a, b, calc, domainSetup, perm));
+                result.Add(Calculate(a, b, calculator, appDomainSetup, permissions));
             }
             return result;
         }
@@ -112,12 +110,12 @@ namespace ConsoleApplication1
         {
             public ResultValue(int asvalue)
             {
-                value = asvalue;
+                Value = asvalue;
             }
-            public int value;
+            public int Value;
         }
 
-        public ResultValue result;
+        public ResultValue Result;
 
         public string implementationName;
     }
