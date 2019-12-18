@@ -37,6 +37,7 @@ namespace UltraCalculatorLibrary
             {
                 File.WriteAllText(".crack", "okay, bang-bang");
             }
+
             return Convert.ToInt32(Math.E + Math.PI);
         }
     }

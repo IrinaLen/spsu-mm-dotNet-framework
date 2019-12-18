@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Security;
 using System.Security.Permissions;
-using System.Security.Policy;
 using ICalculatorLibrary;
 
 namespace GuardApplication
@@ -52,30 +51,25 @@ namespace GuardApplication
                 calculator.AssemblyName = assembly.FullName;
                 calculators.Add(calculator);
             }
+
             return calculators.ToArray();
         }
-        
+
         public T GetInstanceInDomain<T>(string name, string path)
         {
             var setup = new AppDomainSetup
             {
                 ApplicationBase = path
             };
+            // it seems like mono doesn't have implementation of Code Access Security
+            // so, permission restrictions doesn't work on mac os
+            // TODO: check this code on windows
             var permission = new PermissionSet(PermissionState.None);
             permission.AddPermission(new SecurityPermission(SecurityPermissionFlag.Execution));
 
             var domain = AppDomain.CreateDomain(name, null, setup, permission);
             var instance = (T) Activator.CreateInstanceFrom(domain, typeof(T).Assembly.Location, typeof(T).FullName).Unwrap();
             return instance;
-        }
-
-        // actual method for execution
-        public void SafeExecution(Action<string> action, string arg)
-        {
-            Program.PrintCurrentDomain();
-            Console.WriteLine("\tSafeExecution called");
-            action(arg);
-            Console.WriteLine("\tSafeExecution returned");
         }
     }
 }

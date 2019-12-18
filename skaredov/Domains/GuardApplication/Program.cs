@@ -9,18 +9,15 @@ namespace GuardApplication
         private static readonly string _root = Path.Combine("..", "..", "..");
         private static readonly string _dumb = "DumbCalculatorLibrary";
         private static readonly string _ultra = "UltraCalculatorLibrary";
-        
+
         public static void Main(string[] args)
         {
-            if (args.Length == 0)
-            {
-                args = new[] {GetPathToAssembly(_dumb), GetPathToAssembly(_ultra)};
-            }
+            if (args.Length == 0) args = new[] {GetPathToAssembly(_dumb), GetPathToAssembly(_ultra)};
 
             PrintCurrentDomain();
             Console.WriteLine(
                 "Explore assemblies and run every ICalculator.Sum(42 + 27) in separate domains:\n\t" +
-                $"{String.Join("\n\t", args)}"
+                $"{string.Join("\n\t", args)}"
             );
 
             GuardDomain.Execute("General Guardian", guardian =>
