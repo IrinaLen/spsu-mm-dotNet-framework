@@ -12,7 +12,7 @@ namespace GuardApplication
 
         public static void Main(string[] args)
         {
-            if (args.Length == 0) args = new[] {GetPathToAssembly(_dumb), GetPathToAssembly(_ultra)};
+            if (args.Length == 0) args = new[] {GetPathToAssembly(_dumb, _root), GetPathToAssembly(_ultra, _root)};
 
             PrintCurrentDomain();
             Console.WriteLine(
@@ -57,18 +57,18 @@ namespace GuardApplication
 
         #region utils
 
-        public static string GetPathToBase(string assembly)
+        public static string GetPathToBase(string assembly, string root)
         {
-            var bin = Path.Combine(_root, assembly, "bin");
+            var bin = Path.Combine(root, assembly, "bin");
             var conf = Directory.Exists(Path.Combine(bin, "Debug"))
                 ? "Debug"
                 : "Release";
             return Path.GetFullPath(Path.Combine(bin, conf));
         }
 
-        public static string GetPathToAssembly(string assembly)
+        public static string GetPathToAssembly(string assembly, string root)
         {
-            var path = GetPathToBase(assembly);
+            var path = GetPathToBase(assembly, root);
             return Path.Combine(path, assembly + ".dll");
         }
 

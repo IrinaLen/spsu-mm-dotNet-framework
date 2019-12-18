@@ -52,6 +52,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\GuardApplication\GuardApplication.csproj">
+      <Project>{efa205f9-4d43-44ff-8371-7331842092a5}</Project>
+      <Name>GuardApplication</Name>
+    </ProjectReference>
     <ProjectReference Include="..\UltraCalculatorLibrary\UltraCalculatorLibrary.csproj">
       <Project>{e56721aa-698d-4cab-9eb4-8494ebf7bbd8}</Project>
       <Name>UltraCalculatorLibrary</Name>

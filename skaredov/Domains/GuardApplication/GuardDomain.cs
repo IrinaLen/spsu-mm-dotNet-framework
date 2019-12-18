@@ -63,7 +63,6 @@ namespace GuardApplication
             };
             // it seems like mono doesn't have implementation of Code Access Security
             // so, permission restrictions doesn't work on mac os
-            // TODO: check this code on windows
             var permission = new PermissionSet(PermissionState.None);
             permission.AddPermission(new SecurityPermission(SecurityPermissionFlag.Execution));
 
