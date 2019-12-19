@@ -6,19 +6,20 @@ namespace CherepanovThreadpool
 {
     public class MyThreadPool : IDisposable
     {
+        private readonly CancellationTokenSource _tokenSource = new CancellationTokenSource();
+        private readonly CancellationToken _token;
+        private object _disposeLock = new object();
+        private ConcurrentQueue<ITask> _taskQueue = new ConcurrentQueue<ITask>();
+
         public readonly int ThreadNumber;
         public bool IsDisposed { get; private set; }
-        private object _disposeLock = new object();
-        private ConcurrentQueue<ITask> taskQueue = new ConcurrentQueue<ITask>();
-        CancellationTokenSource tokenSource = new CancellationTokenSource();
-        CancellationToken token;
 
-        public MyThreadPool(int ThreadNumber)
+        public MyThreadPool(int threadNumber)
         {
-            this.ThreadNumber = ThreadNumber;
-            token = tokenSource.Token;
+            this.ThreadNumber = threadNumber;
+            _token = _tokenSource.Token;
 
-            for (int i = 0; i < ThreadNumber; i++)
+            for (int i = 0; i < threadNumber; i++)
             {
                 var worker = new Thread(Worker);
                 worker.Start();
@@ -31,13 +32,13 @@ namespace CherepanovThreadpool
             {
                 lock (_disposeLock)
                 {
-                    if (token.IsCancellationRequested)
+                    if (_token.IsCancellationRequested)
                     {
                         return;
                     }
                 }
 
-                if (taskQueue.TryDequeue(out ITask task))
+                if (_taskQueue.TryDequeue(out ITask task))
                 {
                     task.Exec();
                 }
@@ -52,7 +53,7 @@ namespace CherepanovThreadpool
                 {
                     throw new AggregateException("Cant enqueue new task! Threadpool is disposed!!!");
                 }
-                taskQueue.Enqueue(myTask);
+                _taskQueue.Enqueue(myTask);
                 myTask.IsInThreadpool = true;
             }
         }
@@ -62,15 +63,15 @@ namespace CherepanovThreadpool
             lock (_disposeLock)
             {
                 if (IsDisposed) return;
-                while (!taskQueue.IsEmpty)
+                while (!_taskQueue.IsEmpty)
                 {
-                    if (taskQueue.TryDequeue(out ITask task))
+                    if (_taskQueue.TryDequeue(out ITask task))
                     {
                         task.ThreadpoolIsDisposed = true;
                     }
                 }
                 IsDisposed = true;
-                tokenSource.Cancel();
+                _tokenSource.Cancel();
                 GC.SuppressFinalize(this);
             }
         }

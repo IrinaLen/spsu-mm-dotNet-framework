@@ -13,7 +13,7 @@ namespace CherepanovThreadpool
         private bool _isInThreadpool = false;
         private ITask _prevTask = null;
         private bool _threadpoolIsDisposed = false;
-        private readonly Func<TResult> f;
+        private readonly Func<TResult> _func;
 
         public TResult Result
         {
@@ -61,12 +61,12 @@ namespace CherepanovThreadpool
 
         public MyTask(Func<TResult> f)
         {
-            this.f = f;
+            _func = f;
         }
 
         public MyTask(Func<TResult> f, ITask prevTask)
         {
-            this.f = f;
+            _func = f;
             PrevTask = prevTask;
         }
 
@@ -82,7 +82,7 @@ namespace CherepanovThreadpool
                         return;
                     }
                     IsCompleted = true;
-                    Result = f.Invoke();
+                    Result = _func.Invoke();
 
                 }
                 catch (Exception e)
