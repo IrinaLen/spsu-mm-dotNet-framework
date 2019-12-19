@@ -14,13 +14,13 @@ namespace MyCalcAppTest
         private readonly string _calcClass = "CalcRealizationLib.CalcRealization";
         private readonly string _hackerClass = "CalcRealizationLib.HackerCalcRealization";
         private readonly string _methodToExecuteName = "Sum";
-        private static Object[] parameters = { 45, 25 };
-        private int rightAnswer = 70;
+        private static Object[] _parameters = { 45, 25 };
+        private int _rightAnswer = 70;
 
         [TestMethod]
         public void RunGoodRealization()
         {
-            Assert.AreEqual(SandboxerCalc.ExecuteUntrustedCode(_pathToAssemblyFolder, _assemblyName, _calcClass, _methodToExecuteName, parameters), rightAnswer);
+            Assert.AreEqual(SandboxerCalc.ExecuteUntrustedCode(_pathToAssemblyFolder, _assemblyName, _calcClass, _methodToExecuteName, _parameters), _rightAnswer);
         }
 
         [TestMethod]
@@ -28,7 +28,7 @@ namespace MyCalcAppTest
         {
             try
             {
-                SandboxerCalc.ExecuteUntrustedCode(_pathToAssemblyFolder, _assemblyName, _hackerClass, _methodToExecuteName, parameters);
+                SandboxerCalc.ExecuteUntrustedCode(_pathToAssemblyFolder, _assemblyName, _hackerClass, _methodToExecuteName, _parameters);
                 Assert.Fail();
             }
             catch (TargetInvocationException tex)
@@ -47,10 +47,10 @@ namespace MyCalcAppTest
         [TestMethod]
         public void RunBothRealizations()
         {
-            Assert.AreEqual(SandboxerCalc.ExecuteUntrustedCode(_pathToAssemblyFolder, _assemblyName, _calcClass, _methodToExecuteName, parameters), rightAnswer);
+            Assert.AreEqual(SandboxerCalc.ExecuteUntrustedCode(_pathToAssemblyFolder, _assemblyName, _calcClass, _methodToExecuteName, _parameters), _rightAnswer);
             try
             {
-                SandboxerCalc.ExecuteUntrustedCode(_pathToAssemblyFolder, _assemblyName, _hackerClass, _methodToExecuteName, parameters);
+                SandboxerCalc.ExecuteUntrustedCode(_pathToAssemblyFolder, _assemblyName, _hackerClass, _methodToExecuteName, _parameters);
                 Assert.Fail();
             }
             catch (TargetInvocationException tex)

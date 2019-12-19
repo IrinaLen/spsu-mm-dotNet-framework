@@ -15,19 +15,20 @@ namespace myCalcApp
     {
         static void Main()
         {
-            string _pathToAssemblyFolder = @"..\..\..\CalcRealizationLib\bin\Debug";
-            string _assemblyName = "CalcRealizationLib";
-            string _calcClass = "CalcRealizationLib.CalcRealization";
-            string _hackerClass = "CalcRealizationLib.HackerCalcRealization";
-            string _methodToExecuteName = "Sum";
+            string pathToAssemblyFolder = @"..\..\..\CalcRealizationLib\bin\Debug";
+            string assemblyName = "CalcRealizationLib";
+            string calcClass = "CalcRealizationLib.CalcRealization";
+            string hackerClass = "CalcRealizationLib.HackerCalcRealization";
+            string methodToExecuteName = "Sum";
             Object[] parameters = { 45, 25 };
+
             Console.WriteLine("Result of Sum(45,25) is:");
-            Console.WriteLine(ExecuteUntrustedCode(_pathToAssemblyFolder, _assemblyName, _calcClass, _methodToExecuteName, parameters));
+            Console.WriteLine(ExecuteUntrustedCode(pathToAssemblyFolder, assemblyName, calcClass, methodToExecuteName, parameters));
 
             Console.WriteLine("Try to run hacker method:");
             try
             {
-                ExecuteUntrustedCode(_pathToAssemblyFolder, _assemblyName, _hackerClass, _methodToExecuteName, parameters);
+                ExecuteUntrustedCode(pathToAssemblyFolder, assemblyName, hackerClass, methodToExecuteName, parameters);
             }
             catch(Exception ex)
             {
@@ -73,6 +74,7 @@ namespace myCalcApp
                 AppDomain.Unload(newDomain);
             }
         }
+
         public object SafetyExecuteUntrustedCode(string assemblyName, string typeName, string entryPoint, Object[] parameters)
         {
             Assembly asm = Assembly.Load(assemblyName);
