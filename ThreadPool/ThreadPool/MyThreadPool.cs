@@ -11,7 +11,7 @@ namespace ThreadPool
         public readonly Thread[] threads; // actually, public only for ThreadsNumber() test
         private bool _isDisposed = false;
         private readonly object _disposeLocker = new object();
-        private bool finishAllThreads = false;
+        private readonly CancellationTokenSource _tokenSource = new CancellationTokenSource();
 
         public MyThreadPool(int size)
         {
@@ -20,7 +20,7 @@ namespace ThreadPool
 
             for (var i = 0; i < size; i++)
             {
-                var thread = new Thread(ConsumeTask) { Name = "Thread #" + i.ToString() };
+                var thread = new Thread(() => ConsumeTask(_tokenSource.Token)) { Name = "Thread #" + i.ToString() };
                 threads[i] = thread;
                 thread.Start();
             }
@@ -40,15 +40,12 @@ namespace ThreadPool
             waitingTasks.Add(task.Execute);
         }
 
-        private void ConsumeTask()
+        private void ConsumeTask(CancellationToken token)
         {
             while (true)
             {
-                if (finishAllThreads)
-                {
-                    return;
-                }
-
+                token.ThrowIfCancellationRequested();
+                
                 try
                 {
                     var task = waitingTasks.Take();
@@ -71,6 +68,7 @@ namespace ThreadPool
                 }
                 _isDisposed = true;
 
+                _tokenSource.Cancel();
                 // Attempts to remove from the collection will not wait when the collection is empty
                 waitingTasks.CompleteAdding();
 
@@ -80,7 +78,6 @@ namespace ThreadPool
                 }
 
                 waitingTasks.Dispose();
-                finishAllThreads = true;
             }
         }
     }
