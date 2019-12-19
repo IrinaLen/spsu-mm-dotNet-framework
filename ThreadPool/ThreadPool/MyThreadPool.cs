@@ -12,6 +12,8 @@ namespace ThreadPool
     private readonly BlockingCollection<Action> _waitingTasks = new BlockingCollection<Action>();
     private readonly Thread[] _threads;
     private bool _isDisposed = false;
+    private readonly CancellationTokenSource _cts = new CancellationTokenSource();
+
     private readonly object _disposeLockObj = new object();
 
     public int Size => _threads.Count(thread => thread.IsAlive);
@@ -21,7 +23,7 @@ namespace ThreadPool
       _threads = new Thread[poolSize];
       for (var i = 0; i < poolSize; ++i)
       {
-        _threads[i] = new Thread(ThreadWork);
+        _threads[i] = new Thread(() => ThreadWork(_cts.Token));
         _threads[i].Start();
       }
     }
@@ -55,32 +57,38 @@ namespace ThreadPool
           throw new ObjectDisposedException("Cannot dispose ThreadPool because it's already disposed");
         }
         _isDisposed = true;
+        _cts.Cancel();
         _waitingTasks.CompleteAdding();
         foreach (var thread in _threads)
         {
           thread.Join();
         }
         _waitingTasks.Dispose();
+        _cts.Dispose();
       }
     }
 
-    private void ThreadWork()
+    private void ThreadWork(CancellationToken ct)
     {
       while (true)
       {
         try
         {
-          var task = _waitingTasks.Take();
+          var task = _waitingTasks.Take(ct);
           task.Invoke();
         }
-        catch (InvalidOperationException)
+        catch (OperationCanceledException)
         {
-          return;
+          break;
         }
         catch (Exception)
         {
           // ignored
         }
+      }
+      foreach (var task in _waitingTasks.GetConsumingEnumerable())
+      {
+        task.Invoke();
       }
     }
   }
